@@ -13,8 +13,8 @@ git clone https://github.com/LabSpend/outliers.git
 ```
 pip install -r requirements.txt
 ```
-2. Then run the program putting your sql username as a command line argument:
+2. Then run the program putting the database your username and password (if necessary) as command line arguments:
 ```
-python3 labspend.py username
+python3 labspend.py -d database -u username -p password (if necessary)
 ```
 
