@@ -9,3 +9,12 @@ git clone https://github.com/LabSpend/outliers.git
 ```
 
 ## Running the program
+1. From a terminal, install the required libraries by running:
+```
+pip install -r requirements.txt
+```
+2. Then run the program putting your sql username as a command line argument:
+```
+python3 labspend.py username
+```
+
