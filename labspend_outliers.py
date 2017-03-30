@@ -20,13 +20,13 @@ def find_outliers_for_item(sku, size, sku_by_size, outlier):
 
 
 	for z in stats.zscore(a):
-		#Only add outliers that you would expect to happen less than or equal to 5% of the time
-		if z >= 1.96 or z <= -1.96:
+		#Only add outliers that you would expect to happen less than or equal to 1% of the time
+		if z >= 6 or z <= -6:
 			outlier.append([abs(z), sku_by_size[i][0], sku_by_size[i][1], sku, size])
 		i = i + 1
 	
 
-def outlier_finder(database, username, password):
+def outlier_finder(database, username, password, filename):
 
 	#Connect to the database
 	conn = psycopg2.connect("dbname=%s user=%s password=%s" % (database, username, password))
@@ -61,7 +61,6 @@ def outlier_finder(database, username, password):
 			if not float(price.strip('$')) == 0:
 				#If it was not free add it to the price array in the sku size
 				skus[invoice['item_sku']][invoice['size']].append([invoice['invoice_number'], float(price.strip('$'))])
-
 	outlier = []
 
 	#Loop through each sku in skus dictionary
@@ -71,15 +70,27 @@ def outlier_finder(database, username, password):
 		for size in skus[sku]:
 
 			#If the length of the price array is greater than 3 run the code to find outliers
-			if len(skus[sku][size]) > 3:
+			if len(skus[sku][size]) > 5:
 				find_outliers_for_item(sku, size, skus[sku][size], outlier)
 
 	#Sort the outliers by the magnitude of their z-score
 	outlier.sort(key=itemgetter(0), reverse=True)
 
+	# Checks to see if it was used before
+	# if filename != '':
+	# 	place_in_file = 1
+	# 	f = open(filename, 'r')
+	# 	key = f.read().split()
+	# 	for i in range(len(outlier)):
+	# 		while(place_in_file < len(key)):
+	# 			if (outlier[i][1] == key[place_in_file+2] and outlier[i][2] == key[place_in_file+4] and
+	# 				outlier[i][3] == key[place_in_file+6] and outlier[i][0] == key[place_in_file+8]):
+	# 				del outlier[i]
+	# 		place_in_file += 3
+
 	#Print out the top 100 outliers with the invoice number, price, sku, size and the z-score
 	print ("OUTLIERS: \n")
-	for i in range(100):
+	for i in range(min(100, len(outlier))):
 		print ("%d. invoice_number: %s 	price: %s 	item_sku: %s 	size: %s 	z-score: %s" % (i+1, outlier[i][1], outlier[i][2], outlier[i][3], outlier[i][4], outlier[i][0]))
 	
 
@@ -88,9 +99,10 @@ if __name__ == "__main__":
 	password = ''
 	database = ''
 	username = ''
+	filename = ''
 
 	#Command line arguments for the database, username, and password
-	opts, args = getopt.getopt(sys.argv[1:], 'd:u:p', ["database=", "username=","password"])
+	opts, args = getopt.getopt(sys.argv[1:], 'd:u:p:f:', ["database=", "username=", "password=", "filename="])
 	for opt, arg in opts:
 		if opt in ("-d", "--database"):
 			database = arg
@@ -98,6 +110,8 @@ if __name__ == "__main__":
 			username = arg
 		elif opt in ("-p", "--password"):
 			password = arg
+		elif opt in ("-f", "--filename"):
+			filename = arg
 		else:
 			print ("Unhandled option")
 
@@ -110,8 +124,7 @@ if __name__ == "__main__":
 	if username == '':
 		print ("Need username parameter")
 		sys.exit(1)
-
 	#Find the outliers
-	outlier_finder(database, username, password)
+	outlier_finder(database, username, password, filename)
 
 
